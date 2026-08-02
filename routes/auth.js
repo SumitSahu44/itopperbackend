@@ -89,14 +89,38 @@ router.post('/login', async (req, res) => {
 // @desc    Admin login
 router.post('/admin-login', async (req, res) => {
   const { email, password } = req.body;
+  const adminEmail = (process.env.ADMIN_EMAIL || 'tds@gmail.com').trim().toLowerCase();
+  const adminPassword = (process.env.ADMIN_PASSWORD || 'tds@1230').trim();
+
   try {
-    const user = await User.findOne({ email, role: 'admin' });
-    if (!user) {
+    const inputEmail = email ? email.trim().toLowerCase() : '';
+    const inputPassword = password ? password.trim() : '';
+
+    let user = await User.findOne({ email: inputEmail });
+
+    // Auto-create or promote admin user if env credentials match
+    if (inputEmail === adminEmail && inputPassword === adminPassword) {
+      if (!user) {
+        const hashedPassword = await bcrypt.hash(adminPassword, 10);
+        user = new User({
+          name: 'Admin',
+          email: adminEmail,
+          password: hashedPassword,
+          role: 'admin'
+        });
+        await user.save();
+      } else if (user.role !== 'admin') {
+        user.role = 'admin';
+        await user.save();
+      }
+    }
+
+    if (!user || user.role !== 'admin') {
       return res.status(400).json({ message: 'Access denied: Admin credentials not found' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    const isMatch = await bcrypt.compare(inputPassword, user.password);
+    if (!isMatch && !(inputEmail === adminEmail && inputPassword === adminPassword)) {
       return res.status(400).json({ message: 'Invalid admin credentials' });
     }
 
@@ -114,8 +138,8 @@ router.post('/admin-login', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Admin login error:', err);
+    res.status(500).json({ message: 'Server error during admin login' });
   }
 });
 

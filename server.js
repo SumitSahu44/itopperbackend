@@ -24,8 +24,8 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Static Folder for Uploads
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
@@ -78,36 +78,38 @@ const seedDatabase = async () => {
       console.log('✅ Default Admin user seeded successfully.');
     }
 
-    // 2. Seed Default Blog (Clears other blogs to keep only this single blog)
-    await Blog.deleteMany({});
-    const defaultBlog = new Blog({
-      title: 'UPSC Prelims GS Paper I 2026 Out, Download PDF Now',
-      category: 'Updates',
-      readTime: '3 min read',
-      excerpt: 'The UPSC Prelims GS Paper I 2026 question paper is now available. Download the PDF and check the complete paper analysis and expected cut-off.',
-      image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=600',
-      published: true,
-      content: `
-        <div class="space-y-6 text-slate-700">
-          <p class="text-lg leading-relaxed">The Union Public Service Commission (UPSC) has successfully conducted the Civil Services Preliminary Examination 2026 - General Studies Paper I today.</p>
-          
-          <h3 class="text-2xl font-bold text-[#163F66] mt-8">Download Question Paper</h3>
-          <p class="leading-relaxed">Candidates and future aspirants can download the official question paper PDF from the link below to analyze the trends and difficulty level.</p>
-          
-          <div class="my-8 p-6 bg-blue-50 border-l-4 border-[#EF961D] rounded-r-xl">
-              <p class="font-bold text-[#163F66] mb-2">UPSC CSE Prelims 2026 - GS Paper I</p>
-              <a href="#" class="inline-block bg-[#EF961D] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#d8871a] transition-colors">Download PDF Here</a>
+    // 2. Seed Default Blog (Only if no blogs exist)
+    const existingBlogsCount = await Blog.countDocuments();
+    if (existingBlogsCount === 0) {
+      const defaultBlog = new Blog({
+        title: 'UPSC Prelims GS Paper I 2026 Out, Download PDF Now',
+        category: 'Updates',
+        readTime: '3 min read',
+        excerpt: 'The UPSC Prelims GS Paper I 2026 question paper is now available. Download the PDF and check the complete paper analysis and expected cut-off.',
+        image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=600',
+        published: true,
+        content: `
+          <div class="space-y-6 text-slate-700">
+            <p class="text-lg leading-relaxed">The Union Public Service Commission (UPSC) has successfully conducted the Civil Services Preliminary Examination 2026 - General Studies Paper I today.</p>
+            
+            <h3 class="text-2xl font-bold text-[#163F66] mt-8">Download Question Paper</h3>
+            <p class="leading-relaxed">Candidates and future aspirants can download the official question paper PDF from the link below to analyze the trends and difficulty level.</p>
+            
+            <div class="my-8 p-6 bg-blue-50 border-l-4 border-[#EF961D] rounded-r-xl">
+                <p class="font-bold text-[#163F66] mb-2">UPSC CSE Prelims 2026 - GS Paper I</p>
+                <a href="#" class="inline-block bg-[#EF961D] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#d8871a] transition-colors">Download PDF Here</a>
+            </div>
+            
+            <h3 class="text-2xl font-bold text-[#163F66] mt-8">Paper Analysis & Expected Cut-off</h3>
+            <p class="leading-relaxed">A detailed analysis of the paper along with the answer key and expected cut-off will be updated shortly by our expert faculty. Stay tuned!</p>
           </div>
-          
-          <h3 class="text-2xl font-bold text-[#163F66] mt-8">Paper Analysis & Expected Cut-off</h3>
-          <p class="leading-relaxed">A detailed analysis of the paper along with the answer key and expected cut-off will be updated shortly by our expert faculty. Stay tuned!</p>
-        </div>
-      `,
-      seoTitle: 'UPSC Prelims GS Paper I 2026 PDF | iTopper Analysis',
-      seoKeywords: 'upsc, prelims 2026, question paper, gs paper 1, upsc cut-off'
-    });
-    await defaultBlog.save();
-    console.log('✅ Default blog post seeded successfully.');
+        `,
+        seoTitle: 'UPSC Prelims GS Paper I 2026 PDF | iTopper Analysis',
+        seoKeywords: 'upsc, prelims 2026, question paper, gs paper 1, upsc cut-off'
+      });
+      await defaultBlog.save();
+      console.log('✅ Default blog post seeded successfully.');
+    }
 
     // 3. Seed Default Faculty
     const existingFaculty = await Faculty.find();

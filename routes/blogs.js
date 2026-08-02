@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Blog = require('../models/Blog');
 const { protect, admin } = require('../middleware/auth');
 
@@ -19,17 +20,16 @@ router.get('/', async (req, res) => {
 // @desc    Get single blog post by ID
 router.get('/:id', async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'Blog post not found' });
+    }
     const blog = await Blog.findById(req.params.id);
     if (!blog) {
       return res.status(404).json({ message: 'Blog post not found' });
     }
     return res.json(blog);
   } catch (err) {
-    console.error(err);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Blog post not found' });
-    }
-    res.status(500).json({ message: 'Server error fetching blog details' });
+    return res.status(404).json({ message: 'Blog post not found' });
   }
 });
 
@@ -63,6 +63,9 @@ router.post('/', protect, admin, async (req, res) => {
 router.put('/:id', protect, admin, async (req, res) => {
   const { title, category, readTime, excerpt, image, content, published, seoTitle, seoKeywords } = req.body;
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'Blog post not found' });
+    }
     let blog = await Blog.findById(req.params.id);
     if (!blog) {
       return res.status(404).json({ message: 'Blog post not found' });
@@ -82,11 +85,7 @@ router.put('/:id', protect, admin, async (req, res) => {
     const updatedBlog = await blog.save();
     return res.json(updatedBlog);
   } catch (err) {
-    console.error(err);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Blog post not found' });
-    }
-    res.status(500).json({ message: 'Server error updating blog' });
+    return res.status(404).json({ message: 'Blog post not found' });
   }
 });
 
@@ -94,6 +93,9 @@ router.put('/:id', protect, admin, async (req, res) => {
 // @desc    Delete a blog post
 router.delete('/:id', protect, admin, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'Blog post not found' });
+    }
     const blog = await Blog.findById(req.params.id);
     if (!blog) {
       return res.status(404).json({ message: 'Blog post not found' });
@@ -102,11 +104,7 @@ router.delete('/:id', protect, admin, async (req, res) => {
     await blog.deleteOne();
     return res.json({ message: 'Blog post removed successfully' });
   } catch (err) {
-    console.error(err);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Blog post not found' });
-    }
-    res.status(500).json({ message: 'Server error deleting blog' });
+    return res.status(404).json({ message: 'Blog post not found' });
   }
 });
 
