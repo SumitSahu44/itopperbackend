@@ -10,6 +10,7 @@ const User = require('./models/User');
 const Blog = require('./models/Blog');
 const Course = require('./models/Course');
 const Faculty = require('./models/Faculty');
+const Evaluation = require('./models/Evaluation');
 
 // Import Routes
 const authRoutes = require('./routes/auth');
@@ -19,13 +20,49 @@ const facultyRoutes = require('./routes/faculty');
 const couponRoutes = require('./routes/coupons');
 const enrollmentRoutes = require('./routes/enrollments');
 const reviewRoutes = require('./routes/reviews');
+const evaluationRoutes = require('./routes/evaluations');
+const paymentRoutes = require('./routes/payment');
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Enable CORS for all origins (Production & Local)
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Database Connection Caching for Serverless (Vercel) & Local
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://itopperiasacademy_db_user:gJ04nfVYQmM5mQBd@cluster0.izkdyny.mongodb.net/itopper?retryWrites=true&w=majority&appName=Cluster0';
+
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected && mongoose.connection.readyState === 1) {
+    return;
+  }
+  try {
+    const db = await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+    });
+    isConnected = db.connections[0].readyState === 1;
+    console.log('🌿 Connected to MongoDB Database successfully.');
+  } catch (err) {
+    console.error('❌ Database connection error:', err.message);
+  }
+};
+
+// Middleware to ensure Database Connection before handling requests
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    await connectDB();
+  }
+  next();
+});
 
 // Static Folder for Uploads
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
@@ -38,27 +75,37 @@ app.use('/api/faculty', facultyRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/evaluations', evaluationRoutes);
+app.use('/api/payment', paymentRoutes);
 
-// Additional Mock Payment Endpoints
-app.post('/api/create-payment', (req, res) => {
-  return res.json({
-    id: 'pay_' + Math.random().toString(36).substring(2, 11),
-    status: 'success',
-    amount: req.body.amount || 0,
-    message: 'Mock payment created successfully'
-  });
+// Legacy Payment endpoint redirection to Razorpay create-order
+app.post('/api/create-payment', (req, res, next) => {
+  req.url = '/create-order';
+  paymentRoutes(req, res, next);
 });
 
 app.post('/api/certificate/send', (req, res) => {
   return res.json({ message: 'Certificate generated and emailed successfully!' });
 });
 
-// Root Route
+// Root & Health Check Routes
 app.get('/', (req, res) => {
-  res.send('iTopper API Server is Running...');
+  res.status(200).json({
+    success: true,
+    message: 'iTopper API Server is Running...',
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Seed Initial Database Data
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Database Seeding Logic
 const seedDatabase = async () => {
   try {
     // 1. Seed Admin User
@@ -171,23 +218,68 @@ const seedDatabase = async () => {
       await defaultCourse.save();
       console.log('✅ Default Course seeded successfully.');
     }
+
+    // 5. Seed Default Evaluations
+    const existingEvaluations = await Evaluation.countDocuments();
+    if (existingEvaluations === 0) {
+      const defaultEvaluations = [
+        {
+          title: "GS Paper 1 Mains Answer Evaluation",
+          category: "GS",
+          paperTag: "GS Paper 1",
+          description: "Comprehensive evaluation covering History, Art & Culture, Geography, Indian Society & World History.",
+          features: [
+            "Detailed Line-by-Line Feedback within 24 Hours",
+            "Model Answer Framework & Structure Map",
+            "Personalized One-on-One Mentor Call",
+            "Keyword Enrichment & Diagram Suggestions"
+          ],
+          mrpPrice: 7999,
+          finalPrice: 4999,
+          duration: "Till Mains 2026",
+          badge: "Popular",
+          purchaseUrl: "/#contact",
+          published: true,
+          order: 1
+        },
+        {
+          title: "GS Paper 2 Mains Answer Evaluation",
+          category: "GS",
+          paperTag: "GS Paper 2",
+          description: "In-depth evaluation for Polity, Governance, Social Justice, Constitution & International Relations.",
+          features: [
+            "Constitutional Articles & Case Laws Integration",
+            "Evaluation by Served Officers & Toppers",
+            "24/7 Doubt Resolution & Mentorship Access",
+            "Monthly Performance Tracking & Analytics"
+          ],
+          mrpPrice: 7999,
+          finalPrice: 4999,
+          duration: "Till Mains 2026",
+          badge: "High Recommended",
+          purchaseUrl: "/#contact",
+          published: true,
+          order: 2
+        }
+      ];
+      await Evaluation.insertMany(defaultEvaluations);
+      console.log('✅ Default Evaluation Plans seeded successfully.');
+    }
   } catch (err) {
     console.error('Error seeding database:', err.message);
   }
 };
 
-// Database Connection
-const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/itopperr';
-
-mongoose.connect(MONGODB_URI)
-  .then(async () => {
-    console.log('🌿 Connected to MongoDB Database successfully.');
+// Start standalone server locally if not imported by Vercel
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000;
+  connectDB().then(async () => {
     await seedDatabase();
     app.listen(PORT, () => {
       console.log(`🚀 Server listening on port ${PORT}`);
     });
-  })
-  .catch(err => {
-    console.error('❌ Database connection failed:', err.message);
   });
+}
+
+// Export Express app for Vercel Serverless Function deployment
+module.exports = app;
