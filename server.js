@@ -84,6 +84,11 @@ app.post('/api/create-payment', (req, res, next) => {
   paymentRoutes(req, res, next);
 });
 
+app.post('/api/payment-webhook', (req, res, next) => {
+  req.url = '/webhook';
+  paymentRoutes(req, res, next);
+});
+
 app.post('/api/certificate/send', (req, res) => {
   return res.json({ message: 'Certificate generated and emailed successfully!' });
 });
