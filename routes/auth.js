@@ -99,8 +99,8 @@ router.post('/login', async (req, res) => {
 // @desc    Admin login
 router.post('/admin-login', async (req, res) => {
   const { email, password } = req.body;
-  const adminEmail = (process.env.ADMIN_EMAIL || 'tds@gmail.com').trim().toLowerCase();
-  const adminPassword = (process.env.ADMIN_PASSWORD || 'tds@1230').trim();
+  const adminEmail = (process.env.ADMIN_EMAIL || 'itopper@gmail.com').trim().toLowerCase();
+  const adminPassword = (process.env.ADMIN_PASSWORD || 'itopper@1230').trim();
 
   try {
     const inputEmail = email ? email.trim().toLowerCase() : '';

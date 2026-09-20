@@ -2,26 +2,24 @@ const mongoose = require('mongoose');
 
 const EnrollmentSchema = new mongoose.Schema({
   studentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: mongoose.Schema.Types.Mixed,
+    default: 'guest_student'
   },
   studentName: {
     type: String,
-    required: true
+    default: 'Student'
   },
   studentEmail: {
     type: String,
-    required: true
+    default: 'student@itopper.com'
   },
   courseId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Course',
-    required: true
+    type: mongoose.Schema.Types.Mixed,
+    default: 'general_course'
   },
   courseName: {
     type: String,
-    required: true
+    default: 'iTopper Course'
   },
   pricePaid: {
     type: Number,
@@ -29,7 +27,6 @@ const EnrollmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Active', 'Completed', 'Cancelled'],
     default: 'Active'
   },
   paymentId: {

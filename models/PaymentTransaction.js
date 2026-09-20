@@ -4,7 +4,6 @@ const PaymentTransactionSchema = new mongoose.Schema({
   orderId: {
     type: String,
     required: true,
-    unique: true,
     index: true
   },
   paymentId: {
@@ -20,8 +19,7 @@ const PaymentTransactionSchema = new mongoose.Schema({
     default: ''
   },
   studentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: mongoose.Schema.Types.Mixed,
     default: null
   },
   studentName: {
@@ -33,12 +31,11 @@ const PaymentTransactionSchema = new mongoose.Schema({
     default: ''
   },
   courseId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.Mixed,
     default: null
   },
   itemType: {
     type: String,
-    enum: ['Course', 'Evaluation', 'Other'],
     default: 'Course'
   },
   itemName: {
@@ -55,12 +52,10 @@ const PaymentTransactionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['CREATED', 'AUTHORIZED', 'PAID', 'VERIFIED', 'FAILED', 'REFUNDED'],
     default: 'CREATED'
   },
   fulfillmentStatus: {
     type: String,
-    enum: ['PENDING', 'FULFILLED', 'FAILED', 'NOT_APPLICABLE'],
     default: 'PENDING'
   },
   refundId: {

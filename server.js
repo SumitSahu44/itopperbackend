@@ -114,8 +114,8 @@ app.get('/api/health', (req, res) => {
 const seedDatabase = async () => {
   try {
     // 1. Seed Admin User
-    const adminEmail = process.env.ADMIN_EMAIL || 'tds@gmail.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'tds@1230';
+    const adminEmail = process.env.ADMIN_EMAIL || 'itopper@gmail.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'itopper@1230';
     
     const existingAdmin = await User.findOne({ email: adminEmail });
     if (!existingAdmin) {
