@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
 
+const TestItemSchema = new mongoose.Schema({
+  id: { type: String },
+  testName: { type: String },
+  testTitle: { type: String },
+  questionPdf: { type: String, default: '' }
+});
+
 const EvaluationSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
   category: { 
@@ -16,6 +23,8 @@ const EvaluationSchema = new mongoose.Schema({
   badge: { type: String, default: '' },
   purchaseUrl: { type: String, default: '/#contact' },
   planPdf: { type: String, default: '' },
+  planPdfTitle: { type: String, default: 'Program Syllabus & Micro-Topics Overview PDF' },
+  tests: [TestItemSchema],
   published: { type: Boolean, default: true },
   order: { type: Number, default: 0 }
 }, { timestamps: true });

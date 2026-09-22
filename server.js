@@ -22,6 +22,7 @@ const enrollmentRoutes = require('./routes/enrollments');
 const reviewRoutes = require('./routes/reviews');
 const evaluationRoutes = require('./routes/evaluations');
 const paymentRoutes = require('./routes/payment');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Legacy Payment endpoint redirection to Razorpay create-order
 app.post('/api/create-payment', (req, res, next) => {
